@@ -1,0 +1,65 @@
+Spark Performance Optimization:
+2 main focus areas
+1)Cluster Configuration Level- Is my spark Job getting enough resources and memory.How much memory its getting and no of cores.
+This is resource level optimization.
+2)Code perspective:
+How we write the code.partitioning, Bucketing,cache and Persist. Minimize or avoid shuffling data.Join optimization.
+Using proper file formats. Using ReduceByKey instead of GroupByKey.
+
+
+Will Look at cluster configuration level now:
+Resources-Memory(RAM) and no.of CPU cores
+
+Our job should get right number of resources.
+We have a 10 node cluster- 10 worker nodes.Lets say each node has 16 CPU cores and each node has 64 GB RAM.When you run your 
+spark job how many resources your spark job gets. We have something called as executor.It is like a container of resources.
+It has RAM and CPU cores.A single node can hold more than 1 Executor. In Data bricks we have 1 :1.
+How many executors we can create in 1 node.
+Each node here has 16 CPU cores and 64 GB RAM.
+2 Strategies-
+Thin Executor-Minimal no of resources. More no of executors per node.
+out of 16 cores 1 is used for background processes. Rest 15 cores we will use to get 15 executors. 1 core and 4 GB per executor.
+
+Is this good?
+There is an issue. In Each container we just 1 core. Multithreading is not possible. In this scenario we will loose parrellism.
+Multiple tasks cant run  in an executor.
+
+When we broadcast a table we will need a lot of copies of broadcast variable as no of exec is high.
+
+
+Fat Executor: Give max resources to each executor. Each machine has 16 cores and 64 GB RAM.
+Is this a good approach.
+Extreme things are not good.
+Drawbacks:
+It is seen that if a executor holds more than 5 cores than the hdfs throughput suffers. They get slow.
+Garbage collection takes more time ie remove from memory.
+
+Hence we need a balanced 
+
+Right approach is always a balanced approach.
+1 core-backgroung activities
+1 GB RAM-OS
+We need multi threading within executors.
+We dont want to suffer with HDFS throughput.
+5 is the right choice for CPU cores
+So we will have 3 executors per node each having 5 cores and 21 GB ram.
+Out of 21 GB some will be part of overhead.
+Overhead memory is max of( 7 percent of exec memory or 384 MB).
+Each executor holds 5 CPU cores and 19 GB memory.
+We have 10 node cluster.
+Total we have 10 * 3 executors. 30 executors each holds 5 CPU cores and 19 GB RAM.
+1 Executor will go to YARN. Net we have 29 executors
+
+We can use itversity labs
+It has 5 worker nodes 32 GB RAM and 8 CPU cores
+Out of 32 GB we have 24 GB for YARN containers
+Min size of container/executor is 1 GB and max is 4 GB
+They have 8 physical CPU cores--> 16 VCPUs
+Out of 16 VCPUs 12 can be used for executors/containers and rest 4 are for other purposes.
+Now finally we have 24 GB RAM and 12 VCPUs on each worker node.
+5 such worker nodes.
+Executors can have 1 to 2 cores.
+
+
+
+
